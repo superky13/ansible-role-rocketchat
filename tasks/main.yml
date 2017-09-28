@@ -10,16 +10,18 @@
   get_url:
     url: "{{ rc_url }}"
     dest: /opt/rc.tar.gz
+    mode: 0755
   when: rctar.stat.isdir is not defined
 
 - name: unpack Rocket.Chat 
   unarchive:
     src: /opt/rc.tar.gz
     dest: /opt
+    remote_src: true
   when: rctar.stat.isdir is not defined
 
-- name: mv bundle to "{{ rc_home }}"
-  shell: "mv /opt/bundle {{ rc_home }}"
+- name: mv bundle to "{{ rc_app_path }}"
+  shell: "mv /opt/bundle {{ rc_app_path }}"
   when: rctar.stat.isdir is not defined
 
 - name: create "{{ rc_group }}"
@@ -45,7 +47,7 @@
 
 - name: install the required depencies for Rocket.Chat
   yum: 
-    name: "{{ item }"
+    name: "{{ item }}"
     state: present
   with_items:
   - "{{ required_packages }}"
@@ -66,10 +68,7 @@
   when: not n_node.stat.exists
 
 - name: npm install Rocket.Chat
-  npm:
-    state: present
-    path: "{{ rc_app_path }}/bundle/programs/server"
-    executable: "{{ npm_bin }}"
+  shell: "cd {{ rc_app_path }}/programs/server && npm install"
   become_user: "{{ rc_user }}"
 
 - name: copy systemd service file for Rocket.Chat to server
@@ -80,7 +79,7 @@
   - reload_systemd
 
 - name: daemon-reload to pick up new rocketchat.service 
-  shell: systemd daemon-reload
+  shell: systemctl daemon-reload
 
 - name: start firewalld
   service: 
@@ -101,5 +100,5 @@
     state: started
     enabled: true
   with_items:
-  - "{{ rc_apps }}"
+  - "{{ start_apps }}"
   
