@@ -1,0 +1,16 @@
+---
+# defaults file for rocketChat
+rc_user: rocketchat
+rc_group: rocketchat
+rc_app_path: /opt/Rocket.Chat
+rc_node_path: /usr/local/bin
+rc_port: 3000
+required_packages: ['firewalld','mongodb','mongodb-server','nodejs','wget','GraphicsMagick','npm']
+npm_bin: /usr/bin/npm
+rc_node_version: 4.5.0
+rc_node_path_after_n_install: /usr/local/n/versions/node/{{ rc_node_version }}/bin
+rc_version: latest
+rc_url: https://rocket.chat/releases/{{ rc_version }}/download
+rc_service_file: rocketchat.service
+rc_systemd_path: /usr/lib/systemd/system/rocketchat.service
+start_apps: ['mongod','rocketchat','firewalld']

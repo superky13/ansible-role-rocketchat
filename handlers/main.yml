@@ -1,0 +1,4 @@
+---
+# handlers file for rocketChat
+- name: reload_systemd
+  shell: systemd daemon-reload

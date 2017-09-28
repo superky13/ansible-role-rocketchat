@@ -1,0 +1,14 @@
+[Unit]
+Description=Rocket.Chat Server
+After=network.target syslog.target nginx.target mongod.target
+[Service]
+Type=simple
+Restart=always
+StandardOutput=syslog
+SyslogIdentifier=RocketChat
+User={{ rc_user }}
+WorkingDirectory={{ rc_app_path }}
+ExecStart={{ rc_node_path_after_n_install }}/node {{ rc_app_path }}/main.js
+Environment=MONGO_URL=mongodb://localhost:27017/rocketchat ROOT_URL=http://{{ inventory_hostname }}:3000/ PORT=3000
+[Install]
+WantedBy=multi-user.target

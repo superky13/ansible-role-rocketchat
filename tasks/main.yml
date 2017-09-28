@@ -1,0 +1,105 @@
+---
+# tasks file for rocketChat
+- name: has Rocket.Chat already been pulled to server?
+  stat:
+    path: /opt/Rocket.Chat
+  register: rctar
+  ignore_errors: true
+
+- name: pull Rocket.Chat version "{{ rc_version }}" to server
+  get_url:
+    url: "{{ rc_url }}"
+    dest: /opt/rc.tar.gz
+  when: rctar.stat.isdir does not exist
+
+- name: unpack Rocket.Chat 
+  unarchive:
+    src: /opt/rc.tar.gz
+    dest: /opt
+  when: rctar.stat.isdir does not exist
+
+- name: mv bundle to "{{ rc_home }}"
+  shell: "mv /opt/bundle {{ rc_home }}"
+  when: rctar.stat.isdir does not exist
+
+- name: create "{{ rc_group }}"
+  group:
+    name: "{{ rc_group }}"
+    state: present
+    system: true
+
+- name: create "{{ rc_user }}"
+  user:
+    name: "{{ rc_user }}"
+    group: "{{ rc_group }}"
+    system: true
+    state: present
+
+- name: ensure Rocket.Chat path is owned by "{{ rc_user }}"
+  file:
+    path: "{{ rc_app_path }}"
+    owner: "{{ rc_user }}"
+    group: "{{ rc_group }}"
+    state: directory
+    recurse: true
+
+- name: install the required depencies for Rocket.Chat
+  yum: 
+    name: "{{ item }"
+    state: present
+  with_items:
+  - "{{ required_packages }}"
+
+- name: ensure n (nodejs) is installed
+  npm:
+    name: n
+    global: true
+    executable: "{{ npm_bin }}"
+
+- name: has n installed node bin?
+  stat:
+    path: "{{ rc_node_path_after_n_install }}/node"
+  register: n_node
+
+- name: install nodejs environment via n (initial run)
+  shell: n {{ rc_node_version }}
+  when: not n_node.stat.exists
+
+- name: npm install Rocket.Chat
+  npm:
+    state: present
+    path: "{{ rc_app_path }}/bundle/programs/server"
+    executable: "{{ npm_bin }}"
+  become_user: "{{ rc_user }}"
+
+- name: copy systemd service file for Rocket.Chat to server
+  template:
+    src: "{{ rc_service_file }}"
+    dest: "{{ rc_systemd_path }}"
+  notify:
+  - reload_systemd
+
+- name: daemon-reload to pick up new rocketchat.service 
+  shell: systemd daemon-reload
+
+- name: start firewalld
+  service: 
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: open rc port "{{ rc_port }}" on firewall
+  firewalld:
+    port: "{{ rc_port}}/tcp"
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: start apps (rocketchat, mongodb)
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  with_items:
+  - "{{ rc_apps }}"
+  
