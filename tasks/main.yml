@@ -10,17 +10,17 @@
   get_url:
     url: "{{ rc_url }}"
     dest: /opt/rc.tar.gz
-  when: rctar.stat.isdir does not exist
+  when: rctar.stat.isdir is not defined
 
 - name: unpack Rocket.Chat 
   unarchive:
     src: /opt/rc.tar.gz
     dest: /opt
-  when: rctar.stat.isdir does not exist
+  when: rctar.stat.isdir is not defined
 
 - name: mv bundle to "{{ rc_home }}"
   shell: "mv /opt/bundle {{ rc_home }}"
-  when: rctar.stat.isdir does not exist
+  when: rctar.stat.isdir is not defined
 
 - name: create "{{ rc_group }}"
   group:
