@@ -1,5 +1,6 @@
 ---
 # defaults file for rocketChat
+## testing sync with galaxy
 rc_user: rocketchat
 rc_group: rocketchat
 rc_app_path: /opt/Rocket.Chat
